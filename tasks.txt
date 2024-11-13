@@ -1,0 +1,48 @@
+1. Spinning wheel component: 
+- Split into 4 segments with a small icon as an action in each segment.
+- When you click on the spinning wheel or the spin button it will start the spinning animation with a small fixed arrow pointing at the segment that's going to be chosen.
+  when animation ends.
+- Example of how we might get an action: let action = await wheel.spin();
+2. Actions:
+  1. Attack
+  2. Heal
+  3. Add spawn to Player1
+  4. Add spawn to Player2
+- Based on action, it will either have the player1 or player2 attack one another, heal the playerX, add another spawn (Players can have max 3 spawns.)
+- When the player is attacking it will play a slash animation on a spawn that's getting attacked.
+- We can apply actions to Players: Action.heal(player); Action.attack(player1, player2); Action.addSpawn(player1);
+3. Spawns
+- Each spawn has 10HP
+- Each spawn has an attack power of 2HP
+- Each spawn has its own sprite
+- Extra: Each spawn has its own animations.
+4. Animations
+- There will be two animations: the first is the slash and the second is where we'll move the spawn that's attacking to an enemy spawn and then return it back to its initial
+  position after the attack has been finished.
+5. Map
+- It's going to be a simple 20x20 tile surface on which we're going to create spawns.
+6. UI
+- For simplicity we're going to have two health bars that are going to represent the sum of health points of Player's spawns.
+- Button to spin the wheel
+- Button to abandon the game
+- Button to restart the game
+- When one of the players have no HP, hide every game UI element and render the winner message with the possibility to restart the game if the two players are willing
+  to.
+7. Player
+- Number of spawns
+- HP (sum of spawns' hitpoints)
+- Spawn type
+8. Game
+- Main class that will control the whole process of the game: Determining who's turn, Getting actions from the wheel, Performing Actions, -
+9. SceneManager
+- Scene control (Choosing Nickname Scene, Game Scene, Game Over Scene, Timeout Scene, etc.)
+
+
+
+Multiplayer Version:
+1. UI
+- When you access the game's page it will first ask you to enter your nickname. Then it will redirect the user to "Waiting" page where it will for the two players to finish
+  choosing their nicknames. If one of the players, or both, are taking too much time to enter their nicknames, the program is going to remove the two connections, show timeout
+  error, and will ask them to refresh the page.
+
+
