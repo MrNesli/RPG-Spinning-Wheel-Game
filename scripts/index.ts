@@ -1,6 +1,6 @@
 const canvas: HTMLCanvasElement = document.getElementById("game-window") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
-const colors = ["orange", "red", "blue", "yellow"];
+const colors = ["orange", "red", "blue", "yellow", "green", "purple"];
 
 if (!ctx) {
   throw new Error("Couldn't get the context.");
@@ -16,6 +16,26 @@ ctx.canvas.height = window.innerHeight;
 // TODO: Player interface: HP, spawns, spawn_type, perform_action(Action)
 // TODO: Game class that will handle whole game's logic: player's action, who's turn, game over condition, etc.
 //
+
+function randomNumber(min: number, max: number) {
+  return Math.random() * (max - min) + min;
+}
+
+function drawTriangle(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  size: number,
+  color: string = "black",
+) {
+  ctx.beginPath();
+  ctx.fillStyle = color;
+  ctx.moveTo(x, y);
+  ctx.lineTo(x + size, y - size);
+  ctx.lineTo(x - size, y - size);
+  ctx.fill();
+
+}
 
 function drawArc(
   ctx: CanvasRenderingContext2D,
@@ -41,6 +61,15 @@ function drawArc(
   }
 }
 
+function degrees_to_radians(degree: number): number {
+  return degree * (Math.PI / 180);
+}
+
+function radians_to_degrees(radian: number): number {
+  return radian * (180 / Math.PI);
+}
+// Math.
+
 function drawSegmentedCircle(
   ctx: CanvasRenderingContext2D,
   number_of_segments: number,
@@ -48,54 +77,64 @@ function drawSegmentedCircle(
   y: number,
   radius: number,
   rotation: number,
-  items: Ghost[]
+  items: Items,
+  debug: boolean = false
 ) {
-  if (number_of_segments !== items.length) {
-    throw new Error("The number of segments and items must be equal.");
-  }
 
   ctx.save();
   ctx.translate(x, y);
   ctx.rotate(rotation);
   ctx.translate(-x, -y);
-  let segment_angle = (Math.PI * 2) / number_of_segments; // single segment angle
+  // let segment_angle = (Math.PI / 180) * 360 / number_of_segments; // single segment angle
+
+  let segment_angle = 360 / number_of_segments; // single segment angle
+  // let degrees_to_radians = (Math.PI / 180);
   for (let segment = 1; segment <= number_of_segments; segment++) {
+    // Range of ith segment's angle converted to radians
     let angle_start = ((segment - 1) * segment_angle);
     let angle_end = segment * segment_angle;
 
+    angle_start = degrees_to_radians(angle_start);
+    angle_end = degrees_to_radians(angle_end);
+
+    // Drawing the segment
     drawArc(ctx, x, y, radius, angle_start, angle_end, true);
 
-    // let radius_center_x = x + radius * Math.cos((angle_end - angle_start) * (segment - 0.5));
-    // let radius_center_x = x + radius * Math.cos((angle_end - angle_start) * (segment - 0.5));
+    let radius_center_x = x + radius / 4 * Math.cos(angle_end);
+    let radius_center_y = y + radius / 4 * Math.sin(angle_end);
 
-    let radius_center_x = x + radius / 2 * Math.cos(angle_end);
-    let radius_center_y = y + radius / 2 * Math.sin(angle_end);
-
-    // console.log(`Radius center x${segment}: ` + radius_center_x);
-    // console.log(`Radius center y${segment}: ` + radius_center_y);
-
-    // TODO: When the wheel size is too big for items, you need to offset radius_center positions
-    // Use size 400 to see what I mean
-
-    // Item coordinate point for visual understanding
-    drawArc(ctx, radius_center_x, radius_center_y, 9, 0, Math.PI * 2, false, colors[segment - 1]);
+    if (debug) {
+      // Item coordinate point for visual understanding
+      drawArc(ctx, radius_center_x, radius_center_y, 9, 0, Math.PI * 2, false, colors[segment - 1]);
+    }
 
     ctx.save(); // saving the state of the context
+
     ctx.translate(radius_center_x, radius_center_y);
+
+    if (debug) {
+      console.log("Segment angle: " + segment_angle);
+    }
 
     // Calculating rotation angle to align the item in its own segment
     // We have to multiply the rotation by -1 if the segment isn't pair 
     // because the circle rotates in the clockwise direction
-    ctx.rotate(angle_end / (Math.pow(-1, segment) * (segment * 2) * (segment % 2 === 0 ? 1.5 : 0.75)) + (segment > 2 ? Math.PI : 0));
+    let item_rotation = degrees_to_radians(-90) - (degrees_to_radians(segment_angle / 2) + (number_of_segments - segment) * degrees_to_radians(segment_angle));
+    ctx.rotate(item_rotation);
+
     ctx.translate(-radius_center_x, -radius_center_y);
 
-    items[segment - 1].set(radius_center_x, radius_center_y);
-    items[segment - 1].draw();
+    // Coordinates of the item relative to the rotated point (segment)
+    let y_offset = radius / 6;
+    let x_offset = -5;
+
+    items[`segment${segment}`].set(radius_center_x + x_offset, radius_center_y + y_offset);
+    items[`segment${segment}`].draw();
 
     ctx.restore(); // restoring the state of the context
   }
 
-  drawArc(ctx, x, y, radius, 0, Math.PI * 2); // a circle
+  drawArc(ctx, x, y, radius, 0, Math.PI * 2, false, "#3F2631"); // a circle
 
   ctx.restore();
 }
@@ -165,45 +204,174 @@ abstract class Spawn {
   abstract draw(x: number, y: number): void;
 }
 
+interface Items {
+  [key: string]: any;
+}
+
 class Wheel {
   wheel_rotation: number;
+  wheel_rotation_duration: number;
   wheel_rotation_speed: number;
-  items: Ghost[];
+  wheel_rotation_max_speed: number;
+  wheel_rotation_stop: number;
+  result_item: any | undefined;
+  items: Items;
 
-  constructor(public ctx: CanvasRenderingContext2D) {
-    this.wheel_rotation = 0;
-    this.wheel_rotation_speed = 0;
-    this.items = [];
-    for (let i = 0; i < 4; i++) {
-      let ghost = new Ghost(
-        `ghost${i}`,
-        ctx
-      );
-      this.items.push(ghost);
+  constructor(
+    public ctx: CanvasRenderingContext2D,
+    public wheel_segments: number,
+    public wheel_x: number,
+    public wheel_y: number,
+    public wheel_radius: number,
+    items: Sprite[]
+  ) {
+    if (wheel_segments !== items.length) {
+      throw new Error("The number of segments and items must be equal.");
     }
+    this.wheel_rotation = 0;
+    this.wheel_rotation_duration = 0; // in seconds
+    this.wheel_rotation_speed = 0.1; // in degrees
+    this.wheel_rotation_max_speed = 0;
+    this.wheel_rotation_stop = 0;
+    this.result_item = undefined;
+    this.items = {};
+    // TODO: Map each item to its own segment/rotation range
 
-    // this.spin();
+    for (let i = 0; i < this.wheel_segments; i++) {
+      this.items[`segment${i + 1}`] = items[i];
+    }
+    console.log(this.items);
 
+    this.spin(1, 10);
+    // NOTE: To find the item on which the wheel has stopped you calculate
+    // you divide the angle that you've got by angle range of each segment
+    // and the segment is the max value of those divisions
+    // 90 - 180 - 270 - 360
   }
 
   draw(dt: number) {
-    drawSegmentedCircle(this.ctx, 4, 200, 200, 150, this.wheel_rotation, this.items);
+    drawTriangle(this.ctx, this.wheel_x, this.wheel_y - this.wheel_radius, 20);
+    drawSegmentedCircle(this.ctx, this.wheel_segments, this.wheel_x, this.wheel_y, this.wheel_radius, this.wheel_rotation, this.items);
+    // console.log("Wheel rotation in degrees: " + this.wheel_rotation * 180 / Math.PI);
   }
 
-  spin() {
-    this.wheel_rotation_speed = 6;
+  spin(duration: number, speed: number) {
+    this.result_item = undefined;
+    // this.wheel_rotation = 0;
+    this.wheel_rotation_stop = randomNumber(10, 20);
+    this.wheel_rotation_duration = duration;
+    this.wheel_rotation_max_speed = speed;
   }
 
   update(dt: number) {
-    if (this.wheel_rotation_speed > 0) {
-      this.wheel_rotation_speed -= (0.2 / dt);
+    if (this.wheel_rotation < this.wheel_rotation_stop) {
+      // Turn the wheel while it hasn't reached the stop point.
+      // 
+      // While we're not half way through the spin, 
+      // increase the speed not surpassing the max speed 
+      // 
+      // Once we've passed the half way point of the spin
+      // we start to decrease the speed also making sure that it's
+      // not going below 0.
+      //
+      // calculate the exactly needed speed to be able to reach the
+      // end of spinning smoothly with 60 frames / second
+
+      this.wheel_rotation_speed += (0.2 * dt / 60); // render the speed 60 frames / second
+      // TODO: Rewrite the spinning animation
+      //
+      console.log("Target rotation: " + this.wheel_rotation_stop);
+      console.log("Current wheel rotation: " + this.wheel_rotation);
+      console.log("Current wheel speed: " + this.wheel_rotation_speed);
+      console.log();
+      this.wheel_rotation += this.wheel_rotation_speed * dt / 60;
+    }
+    else if (!this.result_item) {
+      console.log("Wheel rotation: " + radians_to_degrees(this.wheel_rotation));
+      if (this.wheel_rotation < 0) {
+        console.log("NOTE: Wheel rotation is negative...");
+      }
+      console.log();
+      let segment_angle = degrees_to_radians(360 / this.wheel_segments);
+      let current_segment_angle_range = segment_angle;
+
+      let currentAngle;
+      let closestItem;
+      for (let i = 1; i <= this.wheel_segments; i++) {
+        let newAngle = this.wheel_rotation / current_segment_angle_range;
+
+        console.log("Segment item: ");
+        console.log(this.items[`segment${i}`]);
+        console.log("Segment angle range: " + radians_to_degrees(current_segment_angle_range));
+        console.log("New angle: " + radians_to_degrees(newAngle));
+
+        if (!currentAngle) {
+          currentAngle = newAngle;
+          closestItem = this.items[`segment${i}`];
+          console.log("Changing closest Item: " + `segment${i}`);
+        }
+        else if (currentAngle < newAngle) {
+          currentAngle = newAngle;
+          closestItem = this.items[`segment${i}`];
+          console.log("Changing closest Item: " + `segment${i}`);
+        }
+        console.log();
+
+        current_segment_angle_range += segment_angle;
+      }
+      console.log("Closest item");
+      console.log(closestItem);
+      this.result_item = 5;
     }
     else {
-      this.wheel_rotation_speed = 0;
+      this.wheel_rotation_duration = 0;
     }
 
-    this.wheel_rotation -= ((Math.PI / 180) * (10 * this.wheel_rotation_speed)) / dt;
   }
+}
+
+class Sprite {
+  img: HTMLImageElement;
+  assets_loaded: boolean = false;
+
+  constructor(
+    public ctx: CanvasRenderingContext2D,
+    public src: string,
+    public x: number = 0,
+    public y: number = 0
+  ) {
+
+    this.img = new Image();
+    this.img.src = src;
+
+    this.img.addEventListener("load", () => {
+      this.assets_loaded = true;
+    });
+  }
+
+  set(x: number, y: number) {
+    this.x = x;
+    this.y = y;
+  }
+
+  draw(): void {
+    this.ctx.beginPath();
+    if (this.assets_loaded) {
+      this.ctx.drawImage(this.img, this.x, this.y, 50, 50);
+    }
+  }
+}
+
+class Button {
+
+}
+
+class Input {
+
+}
+
+class Label {
+
 }
 
 class Ghost extends Spawn {
@@ -235,53 +403,53 @@ class Ghost extends Spawn {
     if (this.assets_loaded) {
       this.ctx.drawImage(this.ghostImg, this.x, this.y, 50, 50);
     }
-    // else {
-    //   throw new Error("Failed to load ghost image.");
-    // }
   }
 
   move(dt: number, dx: number, dy: number) {
     this.x += (dx * dt);
     this.y += (dy * dt);
   }
-
-  // update() {
-  //
-  // }
-
 }
 
 class GameScene extends Scene {
   gameMap: GameMap;
   wheel: Wheel;
-  ghost: Ghost;
+  swordIcon: Sprite;
+  potionIcon: Sprite;
+  ghostIcon: Sprite;
+  warriorIcon: Sprite;
 
   constructor(ctx: CanvasRenderingContext2D) {
     super(ctx);
+    this.swordIcon = new Sprite(this.ctx, "../images/sword.png", 0, 0);
+    this.potionIcon = new Sprite(this.ctx, "../images/heal_potion.png", 0, 0);
+    this.ghostIcon = new Sprite(this.ctx, "../images/ghost.png", 0, 0);
+    this.warriorIcon = new Sprite(this.ctx, "../images/warrior.png", 0, 0);
+
     this.gameMap = new GameMap(this.ctx, window.innerWidth, window.innerHeight);
-    this.wheel = new Wheel(this.ctx);
-    this.ghost = new Ghost("ghost1", this.ctx, 125, 125);
+    this.wheel = new Wheel(
+      this.ctx,
+      4,
+      300,
+      300,
+      100,
+      [this.swordIcon, this.potionIcon, this.ghostIcon, this.warriorIcon]
+    );
   }
 
   draw(dt: number): void {
-    // console.log("Drawing Game Scene...");
-    this.ghost.draw();
     this.wheel.draw(dt);
     this.gameMap.draw();
   }
 
   update(dt: number): void {
-    // console.log("Updating Game Scene...");
-    this.ghost.move(dt, -0.1, 0);
     this.wheel.update(dt);
 
   }
-
-  // render() {
-  // }
 }
 
-
+// TODO: Set fixed 60 frames/second framerate
+// https://www.kirupa.com/animations/ensuring_consistent_animation_speeds.htm
 let gameScene = new GameScene(ctx);
 let lastTime: number | null = null;
 
