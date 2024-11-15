@@ -100,12 +100,15 @@ function drawSegmentedCircle(
     // Drawing the segment
     drawArc(ctx, x, y, radius, angle_start, angle_end, true);
 
+    // getting the quarter coordinate of a radius
     let radius_center_x = x + radius / 4 * Math.cos(angle_end);
     let radius_center_y = y + radius / 4 * Math.sin(angle_end);
 
     if (debug) {
       // Item coordinate point for visual understanding
       drawArc(ctx, radius_center_x, radius_center_y, 9, 0, Math.PI * 2, false, colors[segment - 1]);
+      // ctx.beginPath();
+      ctx.fillText(`${Math.round(radians_to_degrees(angle_end))}`, radius_center_x - 40, radius_center_y);
     }
 
     ctx.save(); // saving the state of the context
@@ -120,16 +123,40 @@ function drawSegmentedCircle(
     // We have to multiply the rotation by -1 if the segment isn't pair 
     // because the circle rotates in the clockwise direction
     let item_rotation = degrees_to_radians(-90) - (degrees_to_radians(segment_angle / 2) + (number_of_segments - segment) * degrees_to_radians(segment_angle));
+    let y_offset = radius / 4;
+    let x_offset = -5;
+    let real_x = radius_center_x + x_offset + 64;
+    let real_y = radius_center_y + y_offset + 64;
+    // ctx.translate(x, y);
+    // let real_x = new_x * Math.cos(item_rotation) - new_y * Math.sin(item_rotation);
+    // let real_y = new_y * Math.cos(item_rotation) + new_x * Math.sin(item_rotation);
+    // ctx.translate(-x, -y);
+
+    drawArc(ctx, real_x, real_y, 9, 0, Math.PI * 2, false, colors[segment - 1]);
+    ctx.beginPath();
+    ctx.fillStyle = "white";
+    // console.log("Real coords: " + real_x + " " + real_y);
+    ctx.fillText(`${real_x} ${real_y}`, real_x, real_y - 20);
     ctx.rotate(item_rotation);
 
     ctx.translate(-radius_center_x, -radius_center_y);
+    // ctx.translate(radius_center_x * 2, radius_center_y * 2);
 
     // Coordinates of the item relative to the rotated point (segment)
-    let y_offset = radius / 6;
-    let x_offset = -5;
 
     items[`segment${segment}`].set(radius_center_x + x_offset, radius_center_y + y_offset);
+    items[`segment${segment}`].setReal(
+      real_x,
+      real_y
+    );
+    // console.log("Image width: " + items[`segment${segment}`].img.width);
+    // console.log("Image height: " + items[`segment${segment}`].img.height);
+
     items[`segment${segment}`].draw();
+
+    if (debug) {
+      drawArc(ctx, x, y - radius, 9, 0, Math.PI * 2, false, "white");
+    }
 
     ctx.restore(); // restoring the state of the context
   }
@@ -209,11 +236,12 @@ interface Items {
 }
 
 class Wheel {
+  animation_state: string;
   wheel_rotation: number;
   wheel_rotation_duration: number;
+  wheel_timer: number;
   wheel_rotation_speed: number;
   wheel_rotation_max_speed: number;
-  wheel_rotation_stop: number;
   result_item: any | undefined;
   items: Items;
 
@@ -228,11 +256,12 @@ class Wheel {
     if (wheel_segments !== items.length) {
       throw new Error("The number of segments and items must be equal.");
     }
+    this.animation_state = "idle";
     this.wheel_rotation = 0;
     this.wheel_rotation_duration = 0; // in seconds
-    this.wheel_rotation_speed = 0.1; // in degrees
+    this.wheel_timer = 0;
+    this.wheel_rotation_speed = 0; // in degrees
     this.wheel_rotation_max_speed = 0;
-    this.wheel_rotation_stop = 0;
     this.result_item = undefined;
     this.items = {};
     // TODO: Map each item to its own segment/rotation range
@@ -242,7 +271,7 @@ class Wheel {
     }
     console.log(this.items);
 
-    this.spin(1, 10);
+    this.spin(1, 5)
     // NOTE: To find the item on which the wheel has stopped you calculate
     // you divide the angle that you've got by angle range of each segment
     // and the segment is the max value of those divisions
@@ -251,86 +280,118 @@ class Wheel {
 
   draw(dt: number) {
     drawTriangle(this.ctx, this.wheel_x, this.wheel_y - this.wheel_radius, 20);
-    drawSegmentedCircle(this.ctx, this.wheel_segments, this.wheel_x, this.wheel_y, this.wheel_radius, this.wheel_rotation, this.items);
+    drawSegmentedCircle(this.ctx, this.wheel_segments, this.wheel_x, this.wheel_y, this.wheel_radius, this.wheel_rotation, this.items, true);
     // console.log("Wheel rotation in degrees: " + this.wheel_rotation * 180 / Math.PI);
   }
 
   spin(duration: number, speed: number) {
+    this.animation_state = "acceleration";
     this.result_item = undefined;
     // this.wheel_rotation = 0;
-    this.wheel_rotation_stop = randomNumber(10, 20);
     this.wheel_rotation_duration = duration;
     this.wheel_rotation_max_speed = speed;
   }
 
   update(dt: number) {
-    if (this.wheel_rotation < this.wheel_rotation_stop) {
-      // Turn the wheel while it hasn't reached the stop point.
-      // 
-      // While we're not half way through the spin, 
-      // increase the speed not surpassing the max speed 
-      // 
-      // Once we've passed the half way point of the spin
-      // we start to decrease the speed also making sure that it's
-      // not going below 0.
-      //
-      // calculate the exactly needed speed to be able to reach the
-      // end of spinning smoothly with 60 frames / second
+    // Turn the wheel while it hasn't reached the stop point.
+    // 
+    // While we're not half way through the spin, 
+    // increase the speed not surpassing the max speed 
+    // 
+    // Once we've passed the half way point of the spin
+    // we start to decrease the speed also making sure that it's
+    // not going below 0.
+    //
+    // calculate the exactly needed speed to be able to reach the
+    // end of spinning smoothly with 60 frames / second
+    //
+    // Three animation states that have duration.
+    // First state: Acceleration
+    // Second state: Spinning
+    // Third state: Slowing down
+    if (this.animation_state != "idle" && this.animation_state != "value") {
+      console.log("Current animation state: " + this.animation_state);
+      console.log("Max rotation speed: " + this.wheel_rotation_max_speed);
+      if (this.animation_state == "acceleration") {
+        if (this.wheel_rotation_speed < this.wheel_rotation_max_speed) {
+          // increases the speed by 6 in 1 second = 10 / 100 * 60
+          // this.wheel_rotation_speed += (10 / 100) * dt / 60;
 
-      this.wheel_rotation_speed += (0.2 * dt / 60); // render the speed 60 frames / second
-      // TODO: Rewrite the spinning animation
-      //
-      console.log("Target rotation: " + this.wheel_rotation_stop);
-      console.log("Current wheel rotation: " + this.wheel_rotation);
-      console.log("Current wheel speed: " + this.wheel_rotation_speed);
-      console.log();
-      this.wheel_rotation += this.wheel_rotation_speed * dt / 60;
-    }
-    else if (!this.result_item) {
-      console.log("Wheel rotation: " + radians_to_degrees(this.wheel_rotation));
-      if (this.wheel_rotation < 0) {
-        console.log("NOTE: Wheel rotation is negative...");
+          // Increases the rotation speed by max_rotation_speed every second
+          this.wheel_rotation_speed += (this.wheel_rotation_max_speed / 60) * dt / 60;
+        }
+        else {
+          this.animation_state = "spinning";
+        }
+
       }
-      console.log();
-      let segment_angle = degrees_to_radians(360 / this.wheel_segments);
-      let current_segment_angle_range = segment_angle;
+      else if (this.animation_state == "spinning") {
+        console.log("Wheel timer value: " + this.wheel_timer);
+        if (this.wheel_timer < this.wheel_rotation_duration) {
+          // (100 / 6) * dt / 60: 1000 per second
+          // second per second
+          this.wheel_timer += ((100 / 6) * dt / 60) / 1000;
+        }
+        else {
+          this.animation_state = "slowing";
+        }
+      }
+      else if (this.animation_state == "slowing") {
+        if (this.wheel_rotation_speed > 0) {
+          // Decreases rotation speed by max_rotation_speed every second
+          this.wheel_rotation_speed -= (this.wheel_rotation_max_speed / 60) * dt / 60;
+        }
+        else {
+          this.animation_state = "value";
+        }
+      }
 
-      let currentAngle;
+      // Increases the rotation by (15 degrees * speed) 1 second
+      this.wheel_rotation += degrees_to_radians((1 / 4) * this.wheel_rotation_speed) * dt / 60;
+    }
+    else if (this.animation_state as string === "value") {
+      // console.log("retrieving the value...");
+      console.log("Current rotation angle (in degrees): " + radians_to_degrees(this.wheel_rotation));
+      //https://stackoverflow.com/questions/13652518/efficiently-find-points-inside-a-circle-sector
+      // TODO: Find a way to check which segment the wheel arrow is pointing at and return the item in that segment
+
+      let x = this.wheel_x;
+      let y = this.wheel_y - this.wheel_radius;
+      let closestDistance;
       let closestItem;
       for (let i = 1; i <= this.wheel_segments; i++) {
-        let newAngle = this.wheel_rotation / current_segment_angle_range;
-
-        console.log("Segment item: ");
-        console.log(this.items[`segment${i}`]);
-        console.log("Segment angle range: " + radians_to_degrees(current_segment_angle_range));
-        console.log("New angle: " + radians_to_degrees(newAngle));
-
-        if (!currentAngle) {
-          currentAngle = newAngle;
+        console.log("Wheel arrow coordinates: " + `${x} ${y}`);
+        console.log("Item coordinates: " + `${this.items[`segment${i}`].real_x} ${this.items[`segment${i}`].real_y}`);
+        let distance = Math.sqrt(
+          Math.pow((x - this.items[`segment${i}`].real_x), 2) +
+          Math.pow((y - (this.items[`segment${i}`].real_y)), 2)
+        );
+        if (!closestDistance) {
+          console.log("Closest distance is NONE");
+          // console.log()
+          closestDistance = distance;
           closestItem = this.items[`segment${i}`];
-          console.log("Changing closest Item: " + `segment${i}`);
         }
-        else if (currentAngle < newAngle) {
-          currentAngle = newAngle;
+        else if (distance < closestDistance) {
+          // console.log(`Distance comparison: ${distance} < ${closestDistance}`);
+          console.log("Distance: " + distance);
+          console.log("Item: ");
+          console.log(this.items[`segment${i}`]);
+          console.log();
+          closestDistance = distance;
           closestItem = this.items[`segment${i}`];
-          console.log("Changing closest Item: " + `segment${i}`);
         }
-        console.log();
-
-        current_segment_angle_range += segment_angle;
       }
-      console.log("Closest item");
-      console.log(closestItem);
-      this.result_item = 5;
-    }
-    else {
-      this.wheel_rotation_duration = 0;
-    }
 
+      console.log(closestItem);
+      this.animation_state = "idle";
+    }
   }
 }
 
 class Sprite {
+  real_x: number;
+  real_y: number;
   img: HTMLImageElement;
   assets_loaded: boolean = false;
 
@@ -340,6 +401,8 @@ class Sprite {
     public x: number = 0,
     public y: number = 0
   ) {
+    this.real_x = x;
+    this.real_y = y;
 
     this.img = new Image();
     this.img.src = src;
@@ -352,6 +415,11 @@ class Sprite {
   set(x: number, y: number) {
     this.x = x;
     this.y = y;
+  }
+
+  setReal(x: number, y: number) {
+    this.real_x = x;
+    this.real_y = y;
   }
 
   draw(): void {
@@ -457,7 +525,6 @@ function render(currentTime: DOMHighResTimeStamp) {
 
   let deltaTime = currentTime - lastTime!;
 
-  // Drawing here
   gameScene.clear();
 
   gameScene.draw(deltaTime);
@@ -467,12 +534,6 @@ function render(currentTime: DOMHighResTimeStamp) {
   requestAnimationFrame(render);
 
   lastTime = currentTime;
-
-  // console.log("lastTime: " + lastTime);
-  // console.log("deltaTime: " + deltaTime);
-  // Updating here
-
-
 }
 
 function startRenderLoop(currentTime: DOMHighResTimeStamp) {
