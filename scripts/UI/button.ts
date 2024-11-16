@@ -1,5 +1,5 @@
-import { GameObject } from "./game_object";
-import { GameEvents } from "./events";
+import { GameObject } from "@utils/game_object";
+import { GameEvents } from "@events/events";
 
 // TODO: Add a CircleButton in the middle of the wheel and when the user clicks on it, 
 // it disappears and the wheel starts to rotate. When it stops, the button reappears
@@ -32,11 +32,11 @@ export class Button implements GameObject {
     console.log("Button clicked");
   }
 
-  isInside(): boolean {
-    if (GameEvents.mouseX >= this.x &&
-      GameEvents.mouseX <= this.x + this.width &&
-      GameEvents.mouseY >= this.y &&
-      GameEvents.mouseY <= this.y + this.height) {
+  mouseInside(): boolean {
+    if (GameEvents.mouse_x >= this.x &&
+      GameEvents.mouse_x <= this.x + this.width &&
+      GameEvents.mouse_y >= this.y &&
+      GameEvents.mouse_y <= this.y + this.height) {
       return true;
     }
     return false;
@@ -44,12 +44,12 @@ export class Button implements GameObject {
   }
 
   update(dt: number): void {
-    if (GameEvents.clicked) {
-      if (this.isInside()) {
-        this.onClick(GameEvents.mouseX, GameEvents.mouseY);
+    if (GameEvents.clicked && !GameEvents.buttons_disabled) {
+      if (this.mouseInside()) {
+        this.onClick(GameEvents.mouse_x, GameEvents.mouse_y);
         GameEvents.clicked = false;
 
-        console.log("Mouse position: " + GameEvents.mouseX + " " + GameEvents.mouseY);
+        console.log("Mouse position: " + GameEvents.mouse_x + " " + GameEvents.mouse_y);
         console.log("Clicked: " + GameEvents.clicked);
       }
     }

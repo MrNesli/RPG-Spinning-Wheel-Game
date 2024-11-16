@@ -1,6 +1,6 @@
-import { Wheel } from "./wheel";
-import { GameObject } from "./game_object";
-import { drawArc } from "./funcs";
+import { Wheel } from "@game/wheel";
+import { GameObject } from "@utils/game_object";
+import { drawArc } from "@utils/funcs";
 
 export class Label implements GameObject {
   label: string;

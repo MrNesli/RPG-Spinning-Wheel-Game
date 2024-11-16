@@ -1,4 +1,4 @@
-import { Items } from "./wheel";
+import { SegmentsIcon } from "@game/wheel";
 
 const colors = ["orange", "red", "blue", "yellow", "green", "purple"];
 
@@ -71,7 +71,7 @@ export function drawSegmentedCircle(
   y: number,
   radius: number,
   rotation: number,
-  items: Items,
+  segments_icon: SegmentsIcon,
   debug: boolean = false
 ) {
 
@@ -82,7 +82,7 @@ export function drawSegmentedCircle(
 
   let segment_angle = 360 / number_of_segments; // single segment angle
   for (let segment = 1; segment <= number_of_segments; segment++) {
-    // Range of ith segment's angle converted to radians
+    // Segment's angle range converted to radians
     let angle_start = ((segment - 1) * segment_angle);
     let angle_end = segment * segment_angle;
 
@@ -112,6 +112,7 @@ export function drawSegmentedCircle(
 
     ctx.save(); // saving the state of the context
 
+    // Translating the context to the origin point of rotation
     ctx.translate(radius_center_x, radius_center_y);
 
     if (debug) {
@@ -125,6 +126,7 @@ export function drawSegmentedCircle(
 
     ctx.rotate(item_rotation);
 
+    // Returning back context translation
     ctx.translate(-radius_center_x, -radius_center_y);
 
     // Coordinate offsets to align the sprite well in the circle's segment
@@ -133,12 +135,12 @@ export function drawSegmentedCircle(
 
     // Coordinates of the item relative to the rotated point (segment)
     // NOTE: IT DOESN'T TRANSFORM COORDINATES TO ROTATED STATE. THOSE ARE JUST COORDINATES FOR DRAWING ON THE SCREEN
-    items[`segment${segment}`].set(radius_center_x + x_offset, radius_center_y + y_offset);
+    segments_icon[`segment${segment}`].set(radius_center_x + x_offset, radius_center_y + y_offset);
 
     // Setting segment's arc center point to be able to calculate the distance to the wheel arrow.
-    items[`segment${segment}`].setReal(arc_center_x, arc_center_y);
+    segments_icon[`segment${segment}`].setReal(arc_center_x, arc_center_y);
 
-    items[`segment${segment}`].draw();
+    segments_icon[`segment${segment}`].draw();
 
 
     ctx.restore(); // restoring the state of the context

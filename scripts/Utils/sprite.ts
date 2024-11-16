@@ -1,4 +1,4 @@
-import { GameObject } from "game_object";
+import { GameObject } from "@utils/game_object";
 
 export abstract class Sprite implements GameObject {
   img: HTMLImageElement;

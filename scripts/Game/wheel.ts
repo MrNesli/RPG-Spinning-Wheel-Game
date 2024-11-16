@@ -1,8 +1,10 @@
-import { Sprite } from "./sprite";
-import { randomNumber, drawSegmentedCircle, drawTriangle, rotatePoint, degrees_to_radians } from "./funcs";
-import { GameObject } from "game_object";
-export interface Items {
-  [key: string]: any;
+// import { Sprite } from "./sprite";
+import { drawSegmentedCircle, drawTriangle, rotatePoint, degrees_to_radians, drawArc } from "@utils/funcs";
+import { GameObject } from "@utils/game_object";
+import { WheelIcon } from "@game/wheel_icon";
+
+export interface SegmentsIcon {
+  [key: string]: WheelIcon;
 }
 
 export class Wheel implements GameObject {
@@ -14,7 +16,7 @@ export class Wheel implements GameObject {
   wheel_rotation_max_speed: number;
   is_spinning: boolean;
   result_item: any | undefined;
-  items: Items;
+  segments_icon: SegmentsIcon;
 
   constructor(
     public ctx: CanvasRenderingContext2D,
@@ -22,10 +24,10 @@ export class Wheel implements GameObject {
     public wheel_x: number,
     public wheel_y: number,
     public wheel_radius: number,
-    items: Sprite[]
+    icons: WheelIcon[]
   ) {
-    if (wheel_segments !== items.length) {
-      throw new Error("The number of segments and items must be equal.");
+    if (wheel_segments !== icons.length) {
+      throw new Error("The number of segments and icons must be equal.");
     }
     this.animation_state = "idle";
     this.is_spinning = false;
@@ -35,17 +37,17 @@ export class Wheel implements GameObject {
     this.wheel_rotation_speed = 0; // in degrees
     this.wheel_rotation_max_speed = 0;
     this.result_item = undefined;
-    this.items = {};
+    this.segments_icon = {};
 
     for (let i = 0; i < this.wheel_segments; i++) {
-      this.items[`segment${i + 1}`] = items[i];
+      this.segments_icon[`segment${i + 1}`] = icons[i];
     }
 
   }
 
   draw(dt: number) {
     drawTriangle(this.ctx, this.wheel_x, this.wheel_y - this.wheel_radius, 20);
-    drawSegmentedCircle(this.ctx, this.wheel_segments, this.wheel_x, this.wheel_y, this.wheel_radius, this.wheel_rotation, this.items, false);
+    drawSegmentedCircle(this.ctx, this.wheel_segments, this.wheel_x, this.wheel_y, this.wheel_radius, this.wheel_rotation, this.segments_icon);
     // console.log("Wheel rotation in degrees: " + this.wheel_rotation * 180 / Math.PI);
   }
 
@@ -124,9 +126,15 @@ export class Wheel implements GameObject {
       let closestDistance;
       let closestItem;
       for (let i = 1; i <= this.wheel_segments; i++) {
-        let item_x = this.items[`segment${i}`].real_x;
-        let item_y = this.items[`segment${i}`].real_y;
+        let item_x = this.segments_icon[`segment${i}`].real_x;
+        let item_y = this.segments_icon[`segment${i}`].real_y;
         let rotated_item_pos = rotatePoint(this.wheel_x, this.wheel_y, item_x, item_y, this.wheel_rotation);
+
+        // drawArc(this.ctx, rotated_item_pos.x, rotated_item_pos.y, 5, 0, Math.PI * 2, false, "blue");
+        // while (true) {
+
+        drawArc(this.ctx, 15, 15, 5, 0, Math.PI * 2, false, "blue");
+        // }
 
         // console.log("Item position: " + `${item_x} ${item_y}`);
         // console.log("Rotated item position: " + `${Math.floor(rotated_item_pos.x)} ${Math.floor(rotated_item_pos.y)}`);
@@ -138,17 +146,18 @@ export class Wheel implements GameObject {
 
         if (!closestDistance) {
           closestDistance = distance;
-          closestItem = this.items[`segment${i}`];
+          closestItem = this.segments_icon[`segment${i}`];
         }
         else if (distance < closestDistance) {
           // console.log(`Distance comparison: ${distance} < ${closestDistance}`);
           closestDistance = distance;
-          closestItem = this.items[`segment${i}`];
+          closestItem = this.segments_icon[`segment${i}`];
         }
       }
+      // throw new Error("wait");
 
       this.result_item = closestItem;
-      console.log(this.result_item);
+      // console.log(this.result_item);
       // console.log(closestItem);
       this.animation_state = "idle";
       this.is_spinning = false;
