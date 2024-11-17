@@ -69,3 +69,4 @@ function startRenderLoop(currentTime: DOMHighResTimeStamp) {
 
 requestAnimationFrame(startRenderLoop); // Starting the main loop
 
+

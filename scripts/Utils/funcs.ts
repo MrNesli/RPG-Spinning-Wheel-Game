@@ -131,7 +131,7 @@ export function drawSegmentedCircle(
 
     // Coordinate offsets to align the sprite well in the circle's segment
     let y_offset = radius / 5;
-    let x_offset = -5;
+    let x_offset = -15;
 
     // Coordinates of the item relative to the rotated point (segment)
     // NOTE: IT DOESN'T TRANSFORM COORDINATES TO ROTATED STATE. THOSE ARE JUST COORDINATES FOR DRAWING ON THE SCREEN

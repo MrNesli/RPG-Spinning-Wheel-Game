@@ -1,6 +1,7 @@
 import { GameEvents } from "@events/events";
 import { GameObject } from "@utils/game_object";
 import { Sprite } from "@utils/sprite";
+import { Player } from "./player";
 
 
 export class Target extends Sprite implements GameObject {
@@ -22,11 +23,12 @@ export class Target extends Sprite implements GameObject {
   constructor(
     ctx: CanvasRenderingContext2D,
     public spawn_id: number,
-    x: number,
-    y: number
+    public player: Player
+    // x: number,
+    // y: number
   ) {
     // Try to resolve the path with @images/target.png
-    super(ctx, "../../images/target.png", x, y);
+    super(ctx, "../../images/target.png", player.spawns[spawn_id].x, player.spawns[spawn_id].y);
 
     this.active = false;
     this.animation_state = "idle";
@@ -120,7 +122,14 @@ export class Target extends Sprite implements GameObject {
     }
   }
 
+  attachToSpawn() {
+    this.x = this.player.spawns[this.spawn_id].x;
+    this.y = this.player.spawns[this.spawn_id].y;
+  }
+
   update(dt: number): void {
+    this.attachToSpawn();
+
     if (this.active) {
       if (this.mouseInside()) {
         this.pauseZoomAnimation();

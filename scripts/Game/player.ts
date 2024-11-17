@@ -6,8 +6,10 @@ const ghost_group_pos: Point = { x: 850, y: 400 };
 const warrior_group_pos: Point = { x: 450, y: 400 };
 
 export class Player implements GameObject {
+  nickname: string;
   spawns: Spawn[];
   hp: number = 0;
+  max_hp: number;
 
   constructor(
     public id: number,
@@ -16,23 +18,26 @@ export class Player implements GameObject {
     public spawn_type: string
   ) {
     this.spawns = [];
+    this.nickname = `Player${this.id}`;
 
     // Based on the spawn type we have to position the group of spawns correctly
     if (this.spawn_type === "Ghost") {
       for (let i = 0; i < this.number_of_spawns; i++) {
         this.spawns.push(
-          new Spawn(this.ctx, this.spawn_type, ghost_group_pos.x - (i % 2 * 50), ghost_group_pos.y + (i * 50))
+          new Spawn(this, this.ctx, this.spawn_type, ghost_group_pos.x - (i % 2 * 50), ghost_group_pos.y + (i * 50))
         );
       }
     }
     else if (this.spawn_type === "Warrior") {
       for (let i = 0; i < this.number_of_spawns; i++) {
         this.spawns.push(
-          new Spawn(this.ctx, this.spawn_type, warrior_group_pos.x + (i % 2 * 50), warrior_group_pos.y + (i * 50))
+          new Spawn(this, this.ctx, this.spawn_type, warrior_group_pos.x + (i % 2 * 50), warrior_group_pos.y + (i * 50))
         );
       }
     }
 
+    this.calc_hp();
+    this.max_hp = this.hp;
   }
 
   calc_hp() {

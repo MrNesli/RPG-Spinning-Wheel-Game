@@ -1,6 +1,9 @@
 import { GameObject } from '@utils/game_object'
 import { Sprite } from '@utils/sprite'
 import { AnimationFrame } from './animation_frame';
+import { degrees_to_radians, radians_to_degrees } from '@utils/funcs';
+import { Player } from './player';
+import { GameEvents } from '@events/events';
 
 export class Spawn extends Sprite implements GameObject {
   animation_timer: number;
@@ -8,6 +11,9 @@ export class Spawn extends Sprite implements GameObject {
   animation_frames: AnimationFrame[];
   current_animation_frame: AnimationFrame | undefined;
   current_animation_frame_index: number;
+
+  angle: number;
+  idle_speed: number;
 
   animation_state: string;
 
@@ -24,6 +30,7 @@ export class Spawn extends Sprite implements GameObject {
   offset_x_from_target: number;
 
   constructor(
+    public controller: Player,
     public ctx: CanvasRenderingContext2D,
     public spawn_type: string,
     public x: number = 0,
@@ -61,6 +68,9 @@ export class Spawn extends Sprite implements GameObject {
     this.current_animation_frame = undefined;
     this.animation_timer = 0;
     this.frame_duration = 300;
+
+    this.angle = degrees_to_radians(90);
+    this.idle_speed = 0.1;
   }
   set(x: number, y: number) {
     this.x = x;
@@ -70,6 +80,7 @@ export class Spawn extends Sprite implements GameObject {
   }
 
   update(dt: number) {
+    this.idleAnimation(dt);
     this.attackAnimation(dt);
   }
 
@@ -80,6 +91,7 @@ export class Spawn extends Sprite implements GameObject {
         this.current_animation_frame.draw(dt);
       }
 
+      // drawing the spawn at the back
       this.ctx.globalCompositeOperation = "destination-over";
       this.ctx.drawImage(this.img, this.x, this.y, 45, 50);
       this.ctx.globalCompositeOperation = "source-over";
@@ -96,6 +108,76 @@ export class Spawn extends Sprite implements GameObject {
     }
     console.log(animation_frames);
     return animation_frames;
+  }
+
+  idleAnimation(dt: number) {
+    if (this.animation_state == "idle") {
+      if (radians_to_degrees(this.angle) > 270) {
+        if (this.idle_speed > 0) {
+          this.idle_speed = -this.idle_speed;
+        }
+      }
+      else if (radians_to_degrees(this.angle) <= 90) {
+        if (this.idle_speed < 0) {
+          this.idle_speed = -this.idle_speed;
+        }
+      }
+      let sin = Math.sin(this.angle) / 8 * 100;
+      this.angle += this.idle_speed * dt / 60;
+      this.y = this.init_y + sin;
+      // console.log("Angle: " + radians_to_degrees(this.angle));
+    }
+    else {
+      // TODO: There's a bug that gets the angle to go beyond limits (0), find and fix it
+
+      let speed = this.idle_speed * dt / 60;
+      let sin = Math.sin(this.angle) / 8 * 100;
+      console.log("Stopping the angle: " + radians_to_degrees(this.angle));
+
+      if (radians_to_degrees(this.angle) > 0 && radians_to_degrees(this.angle) < 90) {
+        if (speed > 0) {
+          speed = -speed;
+        }
+
+        if (this.angle - speed <= degrees_to_radians(0)) {
+          this.angle = 0;
+        }
+      }
+      else if (radians_to_degrees(this.angle) >= 90 && radians_to_degrees(this.angle) < 180) {
+        if (speed < 0) {
+          speed = -speed;
+        }
+
+        if (this.angle + speed >= degrees_to_radians(180)) {
+          this.angle = 0;
+        }
+      }
+      else if (radians_to_degrees(this.angle) > 180 && radians_to_degrees(this.angle) < 270) {
+        if (speed > 0) {
+          speed = -speed;
+        }
+
+        if (this.angle - speed <= degrees_to_radians(180)) {
+          this.angle = 0;
+        }
+      }
+
+      if (this.angle != 0) {
+        this.y = this.init_y + sin;
+        this.angle += speed;
+      }
+      // else if (radians_to_degrees(this.angle) >= 270 && radians_to_degrees(this.angle) < 360) {
+      //   if (speed < 0) {
+      //     speed = -speed;
+      //   }
+      //   this.y = this.init_y + sin;
+      //   this.angle += speed;
+      //
+      //   if (this.angle + speed <= degrees_to_radians(360)) {
+      //     this.angle = 0;
+      //   }
+      // }
+    }
   }
 
   attackAnimation(dt: number) {
@@ -124,7 +206,7 @@ export class Spawn extends Sprite implements GameObject {
       }
       else if (this.animation_state == "move_back") {
         if (!this.canMoveTo(dt, this.init_x, this.init_y, 10, 5)) {
-          this.animation_state = "idle";
+          GameEvents.attacking = false;
         }
       }
     }
@@ -149,6 +231,14 @@ export class Spawn extends Sprite implements GameObject {
       this.animation_state = "move_back";
       this.target!.hp -= this.damage;
     }
+  }
+
+  stopAllAnimations() {
+    this.animation_state = "static";
+  }
+
+  startIdleAnimation() {
+    this.animation_state = "idle";
   }
 
   resetAnimationFrame() {
