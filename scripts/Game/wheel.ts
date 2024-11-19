@@ -55,11 +55,15 @@ export class Wheel implements GameObject {
     if (!this.is_spinning) {
       this.animation_state = "acceleration";
       this.is_spinning = true;
-      this.result_item = undefined;
+      // this.result_item = undefined;
       // this.wheel_rotation = 0;
       this.wheel_rotation_duration = duration;
       this.wheel_rotation_max_speed = speed;
     }
+  }
+
+  empty() {
+    this.result_item = undefined;
   }
 
   animate_spin(dt: number) {

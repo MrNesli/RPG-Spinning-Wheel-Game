@@ -2,14 +2,16 @@ import { Player } from "@game/player";
 import { Label } from "./label";
 import { GameObject } from "@utils/game_object";
 
+// TODO: Rename this file
 export class PlayerHPLabel extends Label implements GameObject {
   constructor(
     public player: Player,
     public ctx: CanvasRenderingContext2D,
+    public font_size: string,
     public x: number,
     public y: number
   ) {
-    super(ctx, "30px", "#7fff00", "", x, y);
+    super(ctx, font_size, "#7fff00", "", x, y);
   }
 
   draw(dt: number): void {

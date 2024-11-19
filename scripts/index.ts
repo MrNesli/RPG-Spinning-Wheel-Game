@@ -4,6 +4,7 @@ import { GameEvents } from "@events/events";
 const canvas: HTMLCanvasElement = document.getElementById("game-window") as HTMLCanvasElement;
 const ctx = canvas.getContext("2d");
 
+
 canvas.addEventListener("click", (e) => {
   GameEvents.clicked = true;
   GameEvents.mouse_x = e.clientX;
@@ -28,6 +29,14 @@ if (!ctx) {
 
 ctx.canvas.width = window.innerWidth;
 ctx.canvas.height = window.innerHeight;
+
+window.addEventListener("resize", () => {
+  ctx.canvas.width = window.innerWidth;
+  ctx.canvas.height = window.innerHeight;
+  console.log("Canvas width: " + ctx.canvas.width);
+  console.log("Canvas height: " + ctx.canvas.height);
+});
+
 // DONE: Main loop
 // DONE: Implement Spinning wheel with small action icons
 // TODO: Nickname input page - custom input field

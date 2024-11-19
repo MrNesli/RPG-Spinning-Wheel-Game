@@ -1,3 +1,4 @@
+import { Screen } from "@utils/screen";
 import { Sprite } from "@utils/sprite";
 
 export class WheelIcon extends Sprite {
@@ -27,11 +28,26 @@ export class WheelIcon extends Sprite {
   }
 
   draw(): void {
+    //
     this.ctx.beginPath();
     if (this.assets_loaded) {
-      this.ctx.drawImage(this.img, this.x, this.y, 50, 50);
+      let icon_width = Screen.width_percent * 5;
+      let icon_height = Screen.height_percent * 15;
+      if (Screen.width < 800) {
+        icon_height = Screen.height_percent * 12;
+      }
+      if (Screen.width < 600) {
+        icon_height = Screen.height_percent * 9;
+      }
+
+      if (Screen.height <= 350) {
+        icon_height = Screen.width_percent * 5;
+      }
+      // else {
+      //   icon_height = Screen.width_percent * 5;
+      // }
+      this.ctx.drawImage(this.img, this.x, this.y, icon_width, icon_height); // Width: 5% of the screen size, Height: 5%
     }
   }
-
   update(dt: number): void { }
 }

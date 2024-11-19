@@ -1,4 +1,5 @@
 import { SegmentsIcon } from "@game/wheel";
+import { Screen } from "./screen";
 
 const colors = ["orange", "red", "blue", "yellow", "green", "purple"];
 
@@ -131,7 +132,7 @@ export function drawSegmentedCircle(
 
     // Coordinate offsets to align the sprite well in the circle's segment
     let y_offset = radius / 5;
-    let x_offset = -15;
+    let x_offset = -Screen.width_percent * 2 + 5; // -15 for 1080px width, -5 for 650px width
 
     // Coordinates of the item relative to the rotated point (segment)
     // NOTE: IT DOESN'T TRANSFORM COORDINATES TO ROTATED STATE. THOSE ARE JUST COORDINATES FOR DRAWING ON THE SCREEN

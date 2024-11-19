@@ -2,8 +2,10 @@ import { GameObject } from "@utils/game_object";
 import { Point } from "@utils/point";
 import { Spawn } from "@game/spawn";
 
-const ghost_group_pos: Point = { x: 850, y: 400 };
-const warrior_group_pos: Point = { x: 450, y: 400 };
+// const ghost_group_pos: Point = { x: 850, y: 400 };
+// const warrior_group_pos: Point = { x: 450, y: 400 };
+const ghost_group_pos: Point = { x: window.innerWidth / 2 + 200, y: window.innerHeight / 2 + 75 };
+const warrior_group_pos: Point = { x: window.innerWidth / 2 - 200, y: window.innerHeight / 2 + 75 };
 
 export class Player implements GameObject {
   nickname: string;
@@ -38,6 +40,15 @@ export class Player implements GameObject {
 
     this.calc_hp();
     this.max_hp = this.hp;
+  }
+
+  spawns_dead(): boolean {
+    for (let i = 0; i < this.number_of_spawns; i++) {
+      if (this.spawns[i].hp <= 0) {
+        return true;
+      }
+    }
+    return false;
   }
 
   calc_hp() {

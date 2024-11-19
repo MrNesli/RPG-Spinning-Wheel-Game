@@ -4,6 +4,7 @@ import { AnimationFrame } from './animation_frame';
 import { degrees_to_radians, radians_to_degrees } from '@utils/funcs';
 import { Player } from './player';
 import { GameEvents } from '@events/events';
+import { Screen } from '@utils/screen';
 
 export class Spawn extends Sprite implements GameObject {
   animation_timer: number;
@@ -50,6 +51,9 @@ export class Spawn extends Sprite implements GameObject {
 
     super(ctx, image_src, x, y);
 
+    console.log("Spawn width: ", this.img.width);
+    console.log("Spawn height: ", this.img.height);
+
     this.animation_state = "idle";
     this.damage = 10;
     this.max_hp = 10;
@@ -93,7 +97,12 @@ export class Spawn extends Sprite implements GameObject {
 
       // drawing the spawn at the back
       this.ctx.globalCompositeOperation = "destination-over";
-      this.ctx.drawImage(this.img, this.x, this.y, 45, 50);
+      // What if the size of the sprite changes ? How to adapt it to the size of the screen
+      let spawn_width = Screen.width_percent * 4 + 2;
+      let spawn_height = Screen.width_percent * 5;
+      // console.log("Spawn width: " + spawn_width);
+      // console.log("Spawn height: " + spawn_height);
+      this.ctx.drawImage(this.img, this.x, this.y, spawn_width, spawn_height); // Width: 4% of the screen, Height: 5%
       this.ctx.globalCompositeOperation = "source-over";
     }
   }
@@ -139,7 +148,7 @@ export class Spawn extends Sprite implements GameObject {
           speed = -speed;
         }
 
-        if (this.angle - speed <= degrees_to_radians(0)) {
+        if (this.angle + speed <= degrees_to_radians(0)) {
           this.angle = 0;
         }
       }
@@ -157,7 +166,7 @@ export class Spawn extends Sprite implements GameObject {
           speed = -speed;
         }
 
-        if (this.angle - speed <= degrees_to_radians(180)) {
+        if (this.angle + speed <= degrees_to_radians(180)) {
           this.angle = 0;
         }
       }

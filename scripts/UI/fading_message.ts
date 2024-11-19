@@ -40,11 +40,13 @@ export class FadingMessage extends Label implements GameObject {
 
   updatePlaceholder(new_placeholder: string) {
     if (!this.animation_triggered) {
+      console.log("Changed the placeholder to: " + new_placeholder)
       this.placeholder = new_placeholder;
     }
   }
 
   startAnimation() {
+    console.log("Animation triggered: " + this.animation_triggered);
     if (!this.animation_triggered) {
       this.animation_state = "fade_out";
       this.animation_triggered = true;
@@ -52,6 +54,7 @@ export class FadingMessage extends Label implements GameObject {
   }
 
   // onUpdate: (dt: number) => void = (dt: number) => { }
+  onAnimationEnd: (dt: number) => void = (dt: number) => { }
 
   update(dt: number): void {
     // this.onUpdate(dt);
@@ -77,7 +80,8 @@ export class FadingMessage extends Label implements GameObject {
       }
       else {
         this.animation_state = "inactive";
-        this.animation_triggered = false;
+        this.onAnimationEnd(dt);
+        // this.animation_triggered = false;
       }
     }
 
