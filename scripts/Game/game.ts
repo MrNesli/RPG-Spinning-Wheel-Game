@@ -15,7 +15,7 @@ import { FadingMessage } from "@UI/fading_message";
 import { Screen } from "@utils/screen";
 
 // Class that describes the logic of the game
-export class Game implements GameObject {
+export class Game {
   // DONE: Action system, Animations
   // TODO: UI for the game: player's nickname with healthpoints bar (see figma)
   // TODO: Add idle animation for spawns
@@ -92,7 +92,6 @@ export class Game implements GameObject {
     // this.screen_width_percent = this.ctx.canvas.width / 100;
     // this.screen_height_percent = this.ctx.canvas.height / 100;
 
-    Screen.updateSizeProportions(ctx);
 
     this.swordIcon = new WheelIcon(this.ctx, "Attack", "../images/sword.png", 0, 0);
     this.swordIcon2 = new WheelIcon(this.ctx, "Attack", "../images/sword.png", 0, 0);
@@ -108,7 +107,7 @@ export class Game implements GameObject {
       this.ctx,
       9,
       window.innerWidth / 2,
-      150,
+      150 + Screen.width_percent * 2,
       Screen.width_percent * 10, // 10% of the screen; 125 static value
       [this.swordIcon, this.swordIcon4, this.potionIcon, this.swordIcon2, this.swordIcon5, this.ghostIcon, this.swordIcon3, this.swordIcon6, this.warriorIcon]
     );
@@ -121,8 +120,8 @@ export class Game implements GameObject {
     //   [this.ghostIcon, this.warriorIcon, this.swordIcon3]
     // );
 
-    this.player_1 = new Player(1, this.ctx, 1, "Warrior");
-    this.player_2 = new Player(2, this.ctx, 1, "Ghost");
+    this.player_1 = new Player(1, this.ctx, 3, "Warrior");
+    this.player_2 = new Player(2, this.ctx, 3, "Ghost");
 
     let rand_num = randomNumber(1, 2);
     this.whose_turn = rand_num === 1 ? this.player_1 : this.player_2;

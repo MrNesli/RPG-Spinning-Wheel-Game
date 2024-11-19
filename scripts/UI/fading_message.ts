@@ -1,7 +1,8 @@
 import { GameObject } from "@utils/game_object";
 import { Label } from "./label";
 
-export class FadingMessage extends Label implements GameObject {
+export class FadingMessage extends Label {
+  visible: boolean;
 
   animation_triggered: boolean;
   animation_state: string;
@@ -18,6 +19,7 @@ export class FadingMessage extends Label implements GameObject {
   ) {
     super(ctx, "50px", "rgba(255, 255, 255, 0)", text, x, y, "center");
 
+    this.visible = false;
     this.alpha = 0;
     this.animation_timer = 0;
     this.animation_state = "inactive";
@@ -64,6 +66,7 @@ export class FadingMessage extends Label implements GameObject {
       }
       else {
         this.animation_state = "wait";
+        this.visible = true;
       }
     }
     else if (this.animation_state == "wait") {
@@ -80,8 +83,8 @@ export class FadingMessage extends Label implements GameObject {
       }
       else {
         this.animation_state = "inactive";
+        this.visible = false;
         this.onAnimationEnd(dt);
-        // this.animation_triggered = false;
       }
     }
 

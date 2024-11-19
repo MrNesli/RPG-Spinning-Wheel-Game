@@ -2,18 +2,19 @@ import { Player } from "@game/player";
 import { GameObject } from "@utils/game_object";
 import { Screen } from "@utils/screen";
 
-export class HealthBar implements GameObject {
+export class HealthBar extends GameObject {
   health_percent: number;
   width_percent: number;
 
   constructor(
     public player: Player,
-    public ctx: CanvasRenderingContext2D,
+    ctx: CanvasRenderingContext2D,
     public width: number,
     public height: number,
-    public x: number,
-    public y: number
+    x: number,
+    y: number
   ) {
+    super(ctx, null, x, y);
     this.health_percent = this.player.max_hp / 100;
     this.width_percent = this.width / 100;
   }

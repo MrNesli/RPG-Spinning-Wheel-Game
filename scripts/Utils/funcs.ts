@@ -13,6 +13,10 @@ export function rotatePoint(cx: number, cy: number, x: number, y: number, angle:
 }
 
 export function randomNumber(min: number, max: number) {
+  return Math.round(Math.random() * (max - min) + min);
+}
+
+export function randomNumberFloat(min: number, max: number) {
   return Math.random() * (max - min) + min;
 }
 
@@ -132,7 +136,12 @@ export function drawSegmentedCircle(
 
     // Coordinate offsets to align the sprite well in the circle's segment
     let y_offset = radius / 5;
-    let x_offset = -Screen.width_percent * 2 + 5; // -15 for 1080px width, -5 for 650px width
+    // let x_offset = -Screen.width_percent * 2 + 5; // -15 for 1080px width, -5 for 650px width
+    let x_offset = -10;
+
+    if (Screen.width < 500) {
+      x_offset = -5;
+    }
 
     // Coordinates of the item relative to the rotated point (segment)
     // NOTE: IT DOESN'T TRANSFORM COORDINATES TO ROTATED STATE. THOSE ARE JUST COORDINATES FOR DRAWING ON THE SCREEN

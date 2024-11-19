@@ -3,21 +3,22 @@ import { GameObject } from "@utils/game_object";
 import { drawArc } from "@utils/funcs";
 import { Player } from "@game/player";
 
-export class Label implements GameObject {
+export class Label extends GameObject {
   label: string;
   wheel: Wheel | undefined;
   player: Player | undefined;
 
   constructor(
-    public ctx: CanvasRenderingContext2D,
+    ctx: CanvasRenderingContext2D,
     public font_size: string,
     public color: string,
     public placeholder: string,
-    public x: number,
-    public y: number,
+    x: number,
+    y: number,
     public align: "left" | "right" | "center" = "left"
 
   ) {
+    super(ctx, null, x, y);
     this.label = "";
     this.wheel = undefined;
     this.player = undefined;

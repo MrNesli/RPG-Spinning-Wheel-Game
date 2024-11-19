@@ -5,17 +5,18 @@ import { PlayerHPLabel } from "./player_label";
 import { Label } from "./label";
 import { Screen } from "@utils/screen";
 
-export class PlayerStats implements GameObject {
+export class PlayerStats extends GameObject {
   health_bar: HealthBar;
   hp_label: PlayerHPLabel;
   nickname_label: Label;
 
   constructor(
-    public ctx: CanvasRenderingContext2D,
+    ctx: CanvasRenderingContext2D,
     public player: Player,
-    public x: number,
-    public y: number
+    x: number,
+    y: number
   ) {
+    super(ctx, null, x, y);
     this.health_bar = new HealthBar(player, this.ctx, 125, 25, x + 100, y + 60);
     this.hp_label = new PlayerHPLabel(player, this.ctx, "30px", x + 20, y + 84);
     this.nickname_label = new Label(this.ctx, "20px", "white", player.nickname, x + 115, y + 40, "center");

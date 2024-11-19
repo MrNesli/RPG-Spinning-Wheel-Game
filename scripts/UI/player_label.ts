@@ -3,7 +3,7 @@ import { Label } from "./label";
 import { GameObject } from "@utils/game_object";
 
 // TODO: Rename this file
-export class PlayerHPLabel extends Label implements GameObject {
+export class PlayerHPLabel extends Label {
   constructor(
     public player: Player,
     public ctx: CanvasRenderingContext2D,

@@ -1,26 +1,30 @@
 import { GameObject } from "@utils/game_object";
 import { GameEvents } from "@events/events";
+import { drawArc } from "@utils/funcs";
 
 // TODO: Add a CircleButton in the middle of the wheel and when the user clicks on it, 
 // it disappears and the wheel starts to rotate. When it stops, the button reappears
-export class Button implements GameObject {
+export class Button extends GameObject {
   // clicked: boolean;
 
   constructor(
-    public ctx: CanvasRenderingContext2D,
+    ctx: CanvasRenderingContext2D,
     public text: string,
-    public x: number,
-    public y: number,
+    x: number,
+    y: number,
     public width: number,
     public height: number
   ) {
-    // this.clicked = false;
+    super(ctx, null, x, y);
   }
 
   draw(dt: number): void {
     // Rectangular button with text inside of it.
     // If you click on it, it will trigger a user defined event
     this.ctx.beginPath();
+    // drawArc(this.ctx, this.x, this.y, 3, 0, Math.PI * 2);
+    // drawArc(this.ctx, this.x + this.width, this.y, 3, 0, Math.PI * 2);
+    // drawArc(this.ctx, this.x + this.width, this.y + this.height, 3, 0, Math.PI * 2);
     this.ctx.fillStyle = "white";
     this.ctx.textAlign = "center"
     this.ctx.fillText(this.text, this.x + this.width / 2, this.y + this.height / 2);
@@ -28,7 +32,7 @@ export class Button implements GameObject {
     this.ctx.fillRect(this.x, this.y, this.width, this.height);
   }
 
-  onClick: (x: number, y: number) => void = (x: number, y: number) => {
+  onClick: () => void = () => {
     console.log("Button clicked");
   }
 
@@ -46,7 +50,7 @@ export class Button implements GameObject {
   update(dt: number): void {
     if (GameEvents.clicked && !GameEvents.buttons_disabled) {
       if (this.mouseInside()) {
-        this.onClick(GameEvents.mouse_x, GameEvents.mouse_y);
+        this.onClick();
         GameEvents.clicked = false;
 
         console.log("Mouse position: " + GameEvents.mouse_x + " " + GameEvents.mouse_y);

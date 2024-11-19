@@ -1,13 +1,17 @@
 // import { Sprite } from "./sprite";
-import { drawSegmentedCircle, drawTriangle, rotatePoint, degrees_to_radians, drawArc } from "@utils/funcs";
+import { drawSegmentedCircle, drawTriangle, rotatePoint, degrees_to_radians, drawArc, randomNumber, randomNumberFloat } from "@utils/funcs";
 import { GameObject } from "@utils/game_object";
 import { WheelIcon } from "@game/wheel_icon";
+import { Button } from "@UI/button";
 
 export interface SegmentsIcon {
   [key: string]: WheelIcon;
 }
 
-export class Wheel implements GameObject {
+export class Wheel extends GameObject {
+  spin_button: Button;
+
+  arrow_size: number = 20;
   animation_state: string;
   wheel_rotation: number;
   wheel_rotation_duration: number;
@@ -19,16 +23,17 @@ export class Wheel implements GameObject {
   segments_icon: SegmentsIcon;
 
   constructor(
-    public ctx: CanvasRenderingContext2D,
+    ctx: CanvasRenderingContext2D,
     public wheel_segments: number,
-    public wheel_x: number,
-    public wheel_y: number,
+    public wheel_x: number, // Coordinates of the center origin point
+    public wheel_y: number, //
     public wheel_radius: number,
     icons: WheelIcon[]
   ) {
     if (wheel_segments !== icons.length) {
       throw new Error("The number of segments and icons must be equal.");
     }
+    super(ctx, null, wheel_x, wheel_y);
     this.animation_state = "idle";
     this.is_spinning = false;
     this.wheel_rotation = 0;
@@ -43,15 +48,27 @@ export class Wheel implements GameObject {
       this.segments_icon[`segment${i + 1}`] = icons[i];
     }
 
+    this.spin_button = new Button(this.ctx, "Spin", 0, 0, 100, 25);
+    this.spin_button.x = this.wheel_x - this.spin_button.width / 2;
+    this.spin_button.y = this.wheel_y + this.wheel_radius + this.spin_button.height / 2 + 15;
+
+    this.spin_button.onClick = () => {
+      // console.log("here:");
+      // this.result_item = new WheelIcon(this.ctx, "Heal", "../images/heal_potion.png", 0, 0);
+      this.spin(randomNumberFloat(0.01, 0.02), randomNumber(30, 50));
+    }
   }
 
   draw(dt: number) {
-    drawTriangle(this.ctx, this.wheel_x, this.wheel_y - this.wheel_radius, 20);
+    // drawArc(this.ctx, this.wheel_x, this.wheel_y, 3, 0, Math.PI * 2);
+    this.spin_button.draw(dt);
+    drawTriangle(this.ctx, this.wheel_x, this.wheel_y - this.wheel_radius, this.arrow_size);
     drawSegmentedCircle(this.ctx, this.wheel_segments, this.wheel_x, this.wheel_y, this.wheel_radius, this.wheel_rotation, this.segments_icon);
     // console.log("Wheel rotation in degrees: " + this.wheel_rotation * 180 / Math.PI);
   }
 
   spin(duration: number, speed: number) {
+    console.log("Spinning the wheel");
     if (!this.is_spinning) {
       this.animation_state = "acceleration";
       this.is_spinning = true;
@@ -170,5 +187,9 @@ export class Wheel implements GameObject {
 
   update(dt: number) {
     this.animate_spin(dt);
+    this.spin_button.update(dt);
+    // We gotta update button's coordinates so that it is able to calculate the mouse intersection correctly
+    this.spin_button.x = this.wheel_x - this.spin_button.width / 2;
+    this.spin_button.y = this.wheel_y + this.wheel_radius + this.spin_button.height / 2 + 15;
   }
 }

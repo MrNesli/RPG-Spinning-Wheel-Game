@@ -6,7 +6,7 @@ import { Player } from './player';
 import { GameEvents } from '@events/events';
 import { Screen } from '@utils/screen';
 
-export class Spawn extends Sprite implements GameObject {
+export class Spawn extends GameObject {
   animation_timer: number;
   frame_duration: number;
   animation_frames: AnimationFrame[];
@@ -32,11 +32,12 @@ export class Spawn extends Sprite implements GameObject {
 
   constructor(
     public controller: Player,
-    public ctx: CanvasRenderingContext2D,
+    ctx: CanvasRenderingContext2D,
     public spawn_type: string,
-    public x: number = 0,
-    public y: number = 0
+    x: number = 0,
+    y: number = 0
   ) {
+    // super(ctx, null, x, y);
 
     let image_src;
     if (spawn_type === "Warrior") {
@@ -51,11 +52,11 @@ export class Spawn extends Sprite implements GameObject {
 
     super(ctx, image_src, x, y);
 
-    console.log("Spawn width: ", this.img.width);
-    console.log("Spawn height: ", this.img.height);
+    // console.log("Spawn width: ", this.img.width);
+    // console.log("Spawn height: ", this.img.height);
 
     this.animation_state = "idle";
-    this.damage = 10;
+    this.damage = 8;
     this.max_hp = 10;
     this.hp = this.max_hp;
     this.velocity_x = 0;
@@ -98,11 +99,31 @@ export class Spawn extends Sprite implements GameObject {
       // drawing the spawn at the back
       this.ctx.globalCompositeOperation = "destination-over";
       // What if the size of the sprite changes ? How to adapt it to the size of the screen
-      let spawn_width = Screen.width_percent * 4 + 2;
-      let spawn_height = Screen.width_percent * 5;
+      let spawn_width = this.width;
+      let spawn_height = this.height;
+      if (Screen.width < 900) {
+        spawn_width = this.width - 5;
+        spawn_height = this.height - 5;
+      }
+      if (Screen.width < 700) {
+        spawn_width = this.width - 10;
+        spawn_height = this.height - 10;
+      }
+      if (Screen.width < 600) {
+        spawn_width = this.width - 20;
+        spawn_height = this.height - 20;
+      }
+      if (Screen.width < 500) {
+        spawn_width = this.width - 25;
+        spawn_height = this.height - 25;
+      }
+      if (Screen.width < 400) {
+        spawn_width = this.width - 30;
+        spawn_height = this.height - 30;
+      }
       // console.log("Spawn width: " + spawn_width);
       // console.log("Spawn height: " + spawn_height);
-      this.ctx.drawImage(this.img, this.x, this.y, spawn_width, spawn_height); // Width: 4% of the screen, Height: 5%
+      this.ctx.drawImage(this.img as HTMLImageElement, this.x, this.y, spawn_width, spawn_height); // Width: 4% of the screen, Height: 5%
       this.ctx.globalCompositeOperation = "source-over";
     }
   }
@@ -194,7 +215,7 @@ export class Spawn extends Sprite implements GameObject {
     if (this.target) {
       if (this.animation_state == "move_to") {
         if (this.spawn_type === "Warrior") {
-          if (!this.canMoveTo(dt, this.target.x - 60, this.target.y, 10, 3)) {
+          if (!this.canMoveTo(dt, this.target.x - 60, this.target.y, 10, 5)) {
             this.animation_state = "slash";
             this.animation_frames = this.getSlashAnimationFrames("slash");
             this.offset_x_from_target = 100;
@@ -202,7 +223,7 @@ export class Spawn extends Sprite implements GameObject {
           }
         }
         else if (this.spawn_type === "Ghost") {
-          if (!this.canMoveTo(dt, this.target.x + 60, this.target.y, 10, 3)) {
+          if (!this.canMoveTo(dt, this.target.x + 60, this.target.y, 10, 5)) {
             this.animation_state = "slash";
             this.animation_frames = this.getSlashAnimationFrames("reversed_slash");
             this.offset_x_from_target = 100;
