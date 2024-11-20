@@ -73,7 +73,7 @@ export class Game {
   add_spawn_message: FadingMessage;
   game_over_message: FadingMessage;
 
-  targets: Target[];
+  targets: Map<string, Target> = new Map<string, Target>();
 
   swordIcon: WheelIcon;
   swordIcon2: WheelIcon;
@@ -85,14 +85,11 @@ export class Game {
   ghostIcon: WheelIcon;
   warriorIcon: WheelIcon;
 
+  objects: Map<string, any> = new Map<string, any>();
+
   constructor(
     public ctx: CanvasRenderingContext2D
   ) {
-    // Initializing
-    // this.screen_width_percent = this.ctx.canvas.width / 100;
-    // this.screen_height_percent = this.ctx.canvas.height / 100;
-
-
     this.swordIcon = new WheelIcon(this.ctx, "Attack", "../images/sword.png", 0, 0);
     this.swordIcon2 = new WheelIcon(this.ctx, "Attack", "../images/sword.png", 0, 0);
     this.swordIcon3 = new WheelIcon(this.ctx, "Attack", "../images/sword.png", 0, 0);
@@ -127,8 +124,6 @@ export class Game {
     this.whose_turn = rand_num === 1 ? this.player_1 : this.player_2;
     this.other = rand_num === 1 ? this.player_2 : this.player_1;
 
-    this.targets = [];
-    this.getTargets();
 
     this.guide_label = new Label(this.ctx, "10px", "white", "", window.innerWidth / 2, window.innerHeight - 15, "center");
 
@@ -139,22 +134,38 @@ export class Game {
     this.heal_message = new FadingMessage(this.ctx, `Healing spawns of ${this.whose_turn}`, 1, window.innerWidth / 2, window.innerHeight / 2);
     this.add_spawn_message = new FadingMessage(this.ctx, ``, 1, window.innerWidth / 2, window.innerHeight / 2);
     this.game_over_message = new FadingMessage(this.ctx, `Checking`, 1, window.innerWidth / 2, window.innerHeight / 2);
+
+    this.objects.set("wheel", this.wheel);
+    this.objects.set("player_1_stats", this.player_1_stats);
+    this.objects.set("player_2_stats", this.player_2_stats);
+    this.objects.set("whose_turn", this.whose_turn);
+    this.objects.set("other", this.other);
+    this.objects.set("guide_label", this.guide_label);
+    // New rendering method: Array of game objects
+    // [
+    //   this.player_1,
+    //   this.player_2,
+    //   this.guide_label,
+    //   this.player_1_stats,
+    //   this.player_2_stats,
+    //   this.wheel,
+    //
+    // ];
   }
 
-  activateTargets() {
-    for (let i = 0; i < this.other.number_of_spawns; i++) {
-      // Like instead of doing hp > 0 you could just have alive() method
-      if (this.other.spawns[i].hp > 0) {
-        this.targets[i].activate();
-      }
-    }
-  }
-
-  deactivateTargets() {
-    for (let i = 0; i < this.other.number_of_spawns; i++) {
-      this.targets[i].deactivate();
-    }
-  }
+  // deactivateTargets() {
+  //   for (let i = 0; i < this.other.number_of_spawns; i++) {
+  //     this.targets[i].deactivate();
+  //   }
+  // }
+  // updateObjects() { Check if objects are changing dynamically without having to reinitialize them again
+  //   this.objects.set("wheel", this.wheel);
+  //   this.objects.set("player_1_stats", this.player_1_stats);
+  //   this.objects.set("player_2_stats", this.player_2_stats);
+  //   this.objects.set("whose_turn", this.whose_turn);
+  //   this.objects.set("other", this.other);
+  //   this.objects.set("guide_label", this.guide_label);
+  // }
 
   stopSpawns() {
     for (let i = 0; i < this.whose_turn.number_of_spawns; i++) {
@@ -166,26 +177,33 @@ export class Game {
     }
   }
 
-  getTargets() {
-    this.targets = [];
+  createTargets() {
+    console.log("Creating targets...");
+    this.targets.clear();
     for (let i = 0; i < this.other.number_of_spawns; i++) {
-      this.targets.push(
+      this.targets.set(
+        `target${i + 1}`,
         new Target(this.ctx, i, this.other)
       );
     }
+    this.objects.set("targets", this.targets);
   }
 
-  drawTargets(dt: number) {
-    for (let i = 0; i < this.targets.length; i++) {
-      this.targets[i].draw(dt);
-    }
+  destroyTargets() {
+    this.targets.clear();
   }
 
-  updateTargets(dt: number) {
-    for (let i = 0; i < this.targets.length; i++) {
-      this.targets[i].update(dt);
-    }
-  }
+  // drawTargets(dt: number) {
+  //   for (let i = 0; i < this.targets.length; i++) {
+  //     this.targets[i].draw(dt);
+  //   }
+  // }
+  //
+  // updateTargets(dt: number) {
+  //   for (let i = 0; i < this.targets.length; i++) {
+  //     this.targets[i].update(dt);
+  //   }
+  // }
 
   updateElements() {
     this.wheel.wheel_radius = Screen.width_percent * 12;
@@ -201,7 +219,7 @@ export class Game {
       this.other = this.player_2;
     }
 
-    this.getTargets();
+    this.createTargets();
   }
 
   reanimateSpawns() {
@@ -219,20 +237,30 @@ export class Game {
       this.attack_message.animation_triggered = false;
       this.reanimateSpawns();
     }
+
     if (this.wheel.result_item) {
       let action = this.wheel.result_item.label;
 
       if (action === "Attack") {
         // Disable buttons
         this.guide_label.placeholder = "GUIDE: Click on the enemy spawn to attack it.";
-        this.attack_message.startAnimation();
+        // this.attack_message.startAnimation();
         GameEvents.attacking = true;
         GameEvents.buttons_disabled = true;
-        this.activateTargets();
+        let found = this.objects.find(element => element === this.targets)
+        console.log("Targets found: ");
+        console.log(found);
+        if (!found) {
+          console.log("Targets not found..");
+          this.createTargets();
+        }
+        // this.activateTargets();
         this.stopSpawns();
         for (let i = 0; i < this.targets.length; i++) {
           this.targets[i].onClick = () => {
-            this.deactivateTargets();
+            // this.deactivateTargets();
+            // this.objects.splice(this.objects.indexOf(this.targets), 1);
+            this.destroyTargets();
             this.whose_turn.attack(this.other, this.targets[i].spawn_id);
             this.wheel.empty();
             GameEvents.buttons_disabled = false;
@@ -249,7 +277,7 @@ export class Game {
         else if (this.whose_turn.spawn_type === "Warrior") {
           this.heal_message.updatePlaceholder(`Healing warriors of ${this.whose_turn.nickname}`);
         }
-        this.heal_message.startAnimation();
+        // this.heal_message.startAnimation();
         this.whose_turn.heal(health_points);
         this.wheel.empty();
         this.toggleTurn();
@@ -275,7 +303,7 @@ export class Game {
             this.add_spawn_message.updatePlaceholder("Ghosts are too many");
           }
         }
-        this.add_spawn_message.startAnimation();
+        // this.add_spawn_message.startAnimation();
         this.wheel.empty();
         this.toggleTurn();
       }
@@ -336,7 +364,7 @@ export class Game {
       this.add_spawn_message.draw(dt);
 
       this.wheel.draw(dt);
-      this.drawTargets(dt);
+      // this.drawTargets(dt);
       this.player_1.draw(dt);
       this.player_2.draw(dt);
       this.guide_label.draw(dt);
@@ -352,7 +380,7 @@ export class Game {
       this.updateElements();
       this.handleActions();
       this.wheel.update(dt);
-      this.updateTargets(dt);
+      // this.updateTargets(dt);
       this.player_1.update(dt);
       this.player_2.update(dt);
       this.player_1_stats.update(dt);

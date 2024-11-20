@@ -162,7 +162,7 @@ export class Spawn extends GameObject {
 
       let speed = this.idle_speed * dt / 60;
       let sin = Math.sin(this.angle) / 8 * 100;
-      console.log("Stopping the angle: " + radians_to_degrees(this.angle));
+      // console.log("Stopping the angle: " + radians_to_degrees(this.angle));
 
       if (radians_to_degrees(this.angle) > 0 && radians_to_degrees(this.angle) < 90) {
         if (speed > 0) {

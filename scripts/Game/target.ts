@@ -67,42 +67,42 @@ export class Target extends GameObject {
   }
 
   draw(dt: number): void {
-    if (this.active) {
-      this.ctx.beginPath();
-      if (this.assets_loaded) {
-        let target_width = this.width;
-        let target_height = this.height;
-        if (Screen.width < 900) {
-          target_width = this.width - 5;
-          target_height = this.height - 5;
-        }
-        if (Screen.width < 700) {
-          target_width = this.width - 10;
-          target_height = this.height - 10;
-        }
-        if (Screen.width < 600) {
-          target_width = this.width - 20;
-          target_height = this.height - 20;
-        }
-        if (Screen.width < 500) {
-          target_width = this.width - 25;
-          target_height = this.height - 25;
-        }
-        if (Screen.width < 400) {
-          target_width = this.width - 30;
-          target_height = this.height - 30;
-        }
-
-        let offset_x = target_width;
-        let offset_y = target_height;
-        //https://stackoverflow.com/questions/33311856/keep-the-image-centred-after-scaling
-        let scaled_x = (this.x * 2 + offset_x - this.width * this.scale) * 0.5; // -60 * 0.5 = -30
-        let scaled_y = (this.y * 2 + offset_y - this.height * this.scale) * 0.5;
-        // console.log("Scaled X" + scaled_x);
-        // console.log("Scaled Y" + scaled_y);
-        this.ctx.drawImage(this.img as HTMLImageElement, scaled_x, scaled_y, this.width * this.scale, this.height * this.scale);
+    // if (this.active) {
+    this.ctx.beginPath();
+    if (this.assets_loaded) {
+      let target_width = this.width;
+      let target_height = this.height;
+      if (Screen.width < 900) {
+        target_width = this.width - 5;
+        target_height = this.height - 5;
       }
+      if (Screen.width < 700) {
+        target_width = this.width - 10;
+        target_height = this.height - 10;
+      }
+      if (Screen.width < 600) {
+        target_width = this.width - 20;
+        target_height = this.height - 20;
+      }
+      if (Screen.width < 500) {
+        target_width = this.width - 25;
+        target_height = this.height - 25;
+      }
+      if (Screen.width < 400) {
+        target_width = this.width - 30;
+        target_height = this.height - 30;
+      }
+
+      let offset_x = target_width;
+      let offset_y = target_height;
+      //https://stackoverflow.com/questions/33311856/keep-the-image-centred-after-scaling
+      let scaled_x = (this.x * 2 + offset_x - this.width * this.scale) * 0.5; // -60 * 0.5 = -30
+      let scaled_y = (this.y * 2 + offset_y - this.height * this.scale) * 0.5;
+      // console.log("Scaled X" + scaled_x);
+      // console.log("Scaled Y" + scaled_y);
+      this.ctx.drawImage(this.img as HTMLImageElement, scaled_x, scaled_y, this.width * this.scale, this.height * this.scale);
     }
+    // }
   }
 
   mouseInside(): boolean {
@@ -158,22 +158,22 @@ export class Target extends GameObject {
   update(dt: number): void {
     this.attachToSpawn();
 
-    if (this.active) {
-      if (this.mouseInside()) {
-        this.pauseZoomAnimation();
-        // console.log("Mouse position target: " + GameEvents.mouseX + " " + GameEvents.mouseY);
-        if (GameEvents.clicked) {
-          // this.width = 0;
-          // this.height = 0;
-          this.onClick();
-          GameEvents.clicked = false;
-        }
+    // if (this.active) {
+    if (this.mouseInside()) {
+      this.pauseZoomAnimation();
+      // console.log("Mouse position target: " + GameEvents.mouseX + " " + GameEvents.mouseY);
+      if (GameEvents.clicked) {
+        // this.width = 0;
+        // this.height = 0;
+        this.onClick();
+        GameEvents.clicked = false;
       }
-      else {
-        this.startZoomAnimation();
-      }
-
-      this.togglingZoomAnimation(dt);
     }
+    else {
+      this.startZoomAnimation();
+    }
+
+    this.togglingZoomAnimation(dt);
   }
+  // }
 }
